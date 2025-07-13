@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Invoice Maker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .invoice-preview {
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .invoice-preview:hover {
+            box-shadow: 0 0 25px rgba(0,0,0,0.15);
+        }
+        
+        .invoice-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .invoice-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .item-row {
+            transition: all 0.2s ease;
+        }
+        
+        .item-row:hover {
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-12 text-center">
+            <h1 class="text-4xl font-bold text-indigo-600 mb-2">Professional Invoice Maker</h1>
+            <p class="text-lg text-gray-600">Create, customize, and download invoices effortlessly</p>
+        </header>
+        
+        <div class="invoice-grid">
+            <div class="invoice-form bg-white rounded-xl p-6 shadow-sm">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6 pb-2 border-b">Invoice Details</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Invoice Number</label>
+                        <input type="text" id="invoiceNumber" placeholder="INV-2023-001" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                        <input type="date" id="invoiceDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                        <input type="date" id="dueDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                        <select id="currency" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="$">USD ($)</option>
+                            <option value="€">EUR (€)</option>
+                            <option value="£">GBP (£)</option>
+                            <option value="¥">JPY (¥)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="from-info">
+                        <h3 class="text-lg font-medium text-gray-800 mb-3 border-b pb-2">From</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
+                                <input type="text" id="fromName" placeholder="Your Company Name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input type="email" id="fromEmail" placeholder="contact@yourcompany.com" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                <textarea id="fromAddress" rows="3" placeholder="Your business address" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="to-info">
+                        <h3 class="text-lg font-medium text-gray-800 mb-3 border-b pb-2">To</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
+                                <input type="text" id="toName" placeholder="Client's Name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input type="email" id="toEmail" placeholder="client@example.com" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                <textarea id="toAddress" rows="3" placeholder="Client's address" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="items-section mb-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-lg font-medium text-gray-800">Items</h3>
+                        <button id="addItem" class="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">+ Add Item</button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsContainer" class="bg-white divide-y divide-gray-200">
+                                <!-- Items will be added here dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="notes mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                    <textarea id="invoiceNotes" rows="3" placeholder="Thank you for your business!" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+                
+                <div class="totals-section bg-gray-50 p-4 rounded-md mb-6">
+                    <div class="grid grid-cols-2 gap-4 mb-2">
+                        <span class="text-sm font-medium text-gray-700">Subtotal:</span>
+                        <span id="subtotal" class="text-right">$0.00</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-2">
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 mr-2 inline-block">Tax Rate (%):</label>
+                            <input type="number" id="taxRate" value="0" min="0" max="100" step="0.1" class="w-20 px-2 py-1 border border-gray-300 rounded-md inline-block">
+                        </div>
+                        <span id="taxAmount" class="text-right">$0.00</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 font-bold mt-3 pt-3 border-t border-gray-200">
+                        <span class="text-lg font-medium text-gray-800">Total:</span>
+                        <span id="invoiceTotal" class="text-right text-lg text-indigo-600">$0.00</span>
+                    </div>
+                </div>
+                
+                <div class="actions flex flex-wrap gap-3">
+                    <button id="previewBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex-1">Preview Invoice</button>
+                    <button id="saveBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">Save Template</button>
+                    <button id="downloadBtn" class="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors">Download PDF</button>
+                </div>
+            </div>
+            
+            <div>
+                <div class="invoice-preview bg-white rounded-xl p-8 mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-6 pb-2 border-b text-center">INVOICE PREVIEW</h2>
+                    <div id="invoicePreview" class="preview-content">
+                        <!-- Invoice preview will be rendered here -->
+                        <div class="text-center text-gray-500 italic">
+                            Your invoice preview will appear here
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sample-templates bg-white rounded-xl p-6 shadow-sm">
+                    <h2 class="text-lg font-medium text-gray-800 mb-3 pb-2 border-b">Sample Templates</h2>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="loadTemplate('default')" class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm">Default</button>
+                        <button onclick="loadTemplate('minimal')" class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm">Minimal</button>
+                        <button onclick="loadTemplate('modern')" class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm">Modern</button>
+                        <button onclick="loadTemplate('classic')" class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm">Classic</button>
+                    </div>
+                </div>
+                
+                <div class="instructions-card bg-white rounded-xl p-6 shadow-sm mt-6">
+                    <h2 class="text-lg font-medium text-gray-800 mb-3 pb-2 border-b">How to Use</h2>
+                    <ol class="list-decimal list-inside space-y-2 text-sm text-gray-700">
+                        <li>Fill in your business and client details</li>
+                        <li>Add items to your invoice</li>
+                        <li>Adjust quantities and prices</li>
+                        <li>Set your tax rate if applicable</li>
+                        <li>Preview and download as PDF</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize the invoice data
+        const invoice = {
+            number: '',
+            date: new Date().toISOString().split('T')[0],
+            dueDate: '',
+            from: {
+                name: '',
+                email: '',
+                address: ''
+            },
+            to: {
+                name: '',
+                email: '',
+                address: ''
+            },
+            items: [],
+            notes: '',
+            taxRate: 0,
+            currency: '$',
+            subtotal: 0,
+            taxAmount: 0,
+            total: 0
+        };
+
+        // DOM elements
+        const elements = {
+            invoiceNumber: document.getElementById('invoiceNumber'),
+            invoiceDate: document.getElementById('invoiceDate'),
+            dueDate: document.getElementById('dueDate'),
+            currency: document.getElementById('currency'),
+            fromName: document.getElementById('fromName'),
+            fromEmail: document.getElementById('fromEmail'),
+            fromAddress: document.getElementById('fromAddress'),
+            toName: document.getElementById('toName'),
+            toEmail: document.getElementById('toEmail'),
+            toAddress: document.getElementById('toAddress'),
+            itemsContainer: document.getElementById('itemsContainer'),
+            addItem: document.getElementById('addItem'),
+            invoiceNotes: document.getElementById('invoiceNotes'),
+            subtotal: document.getElementById('subtotal'),
+            taxRate: document.getElementById('taxRate'),
+            taxAmount: document.getElementById('taxAmount'),
+            invoiceTotal: document.getElementById('invoiceTotal'),
+            previewBtn: document.getElementById('previewBtn'),
+            saveBtn: document.getElementById('saveBtn'),
+            downloadBtn: document.getElementById('downloadBtn'),
+            invoicePreview: document.getElementById('invoicePreview')
+        };
+
+        // Set today's date as default invoice date
+        elements.invoiceDate.value = invoice.date;
+        
+        // Initialize event listeners
+        function initEventListeners() {
+            // Form inputs
+            elements.invoiceNumber.addEventListener('input', updateInvoiceField.bind(null, 'number'));
+            elements.invoiceDate.addEventListener('input', updateInvoiceField.bind(null, 'date'));
+            elements.dueDate.addEventListener('input', updateInvoiceField.bind(null, 'dueDate'));
+            elements.currency.addEventListener('change', updateInvoiceField.bind(null, 'currency'));
+            
+            // From/To sections
+            elements.fromName.addEventListener('input', updateFromField.bind(null, 'name'));
+            elements.fromEmail.addEventListener('input', updateFromField.bind(null, 'email'));
+            elements.fromAddress.addEventListener('input', updateFromField.bind(null, 'address'));
+            elements.toName.addEventListener('input', updateToField.bind(null, 'name'));
+            elements.toEmail.addEventListener('input', updateToField.bind(null, 'email'));
+            elements.toAddress.addEventListener('input', updateToField.bind(null, 'address'));
+            
+            // Items
+            elements.addItem.addEventListener('click', addItem);
+            
+            // Notes
+            elements.invoiceNotes.addEventListener('input', updateInvoiceField.bind(null, 'notes'));
+            
+            // Tax
+            elements.taxRate.addEventListener('input', updateTaxRate);
+            
+            // Buttons
+            elements.previewBtn.addEventListener('click', previewInvoice);
+            elements.saveBtn.addEventListener('click', saveTemplate);
+            elements.downloadBtn.addEventListener('click', downloadPDF);
+        }
+
+        // Update invoice fields
+        function updateInvoiceField(field, e) {
+            invoice[field] = e.target.value;
+            calculateTotals();
+        }
+
+        function updateFromField(field, e) {
+            invoice.from[field] = e.target.value;
+        }
+
+        function updateToField(field, e) {
+            invoice.to[field] = e.target.value;
+        }
+
+        // Add a new item
+        function addItem() {
+            const newItem = {
+                id: Date.now().toString(),
+                name: '',
+                description: '',
+                quantity: 1,
+                price: 0,
+                total: 0
+            };
+            
+            invoice.items.push(newItem);
+            renderItems();
+            
+            // Focus on the last added item name field
+            const lastItem = elements.itemsContainer.lastElementChild;
+            if (lastItem) {
+                const nameInput = lastItem.querySelector('.item-name');
+                if (nameInput) nameInput.focus();
+            }
+        }
+
+        // Update item field
+        function updateItemField(index, field, e) {
+            let value = e.target.value;
+            
+            // Convert quantity and price to numbers
+            if (field === 'quantity' || field === 'price') {
+                value = parseFloat(value) || 0;
+            }
+            
+            invoice.items[index][field] = value;
+            
+            // Calculate item total if quantity or price changes
+            if (field === 'quantity' || field === 'price') {
+                updateItemTotal(index);
+            }
+        }
+
+        // Update item total
+        function updateItemTotal(index) {
+            const item = invoice.items[index];
+            item.total = item.quantity * item.price;
+            calculateTotals();
+            renderItems();
+        }
+
+        // Remove item
+        function removeItem(index) {
+            invoice.items.splice(index, 1);
+            calculateTotals();
+            renderItems();
+        }
+
+        // Calculate invoice totals
+        function calculateTotals() {
+            invoice.subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
+            invoice.taxAmount = invoice.subtotal * (invoice.taxRate / 100);
+            invoice.total = invoice.subtotal + invoice.taxAmount;
+            
+            // Update UI
+            updateTotalsUI();
+        }
+
+        // Update tax rate
+        function updateTaxRate(e) {
+            invoice.taxRate = parseFloat(e.target.value) || 0;
+            calculateTotals();
+        }
+
+        // Update totals in UI
+        function updateTotalsUI() {
+            elements.subtotal.textContent = formatCurrency(invoice.subtotal);
+            elements.taxAmount.textContent = formatCurrency(invoice.taxAmount);
+            elements.invoiceTotal.textContent = formatCurrency(invoice.total);
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return invoice.currency + amount.toFixed(2);
+        }
+
+        // Render items
+        function renderItems() {
+            elements.itemsContainer.innerHTML = '';
+            
+            if (invoice.items.length === 0) {
+                elements.itemsContainer.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-4 py-6 text-center text-gray-500 italic">
+                            Click "Add Item" to start adding items to your invoice
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            invoice.items.forEach((item, index) => {
+                const itemRow = document.createElement('tr');
+                itemRow.className = 'item-row';
+                itemRow.innerHTML = `
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <input type="text" value="${item.name}" class="item-name w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="updateItemField(${index}, 'name', event)">
+                    </td>
+                    <td class="px-4 py-3">
+                        <input type="text" value="${item.description}" class="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="updateItemField(${index}, 'description', event)">
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <input type="number" value="${item.quantity}" min="1" class="w-16 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="updateItemField(${index}, 'quantity', event)">
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <input type="number" value="${item.price}" min="0" step="0.01" class="w-24 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="updateItemField(${index}, 'price', event)">
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        ${formatCurrency(item.total)}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-right">
+                        <button onclick="removeItem(${index})" class="text-red-600 hover:text-red-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </td>
+                `;
+                
+                elements.itemsContainer.appendChild(itemRow);
+            });
+        }
+
+        // Preview invoice
+        function previewInvoice() {
+            const previewHTML = generateInvoiceHTML();
+            elements.invoicePreview.innerHTML = previewHTML;
+            
+            // Scroll to preview
+            elements.invoicePreview.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Generate invoice HTML
+        function generateInvoiceHTML() {
+            const formattedDate = invoice.date ? new Date(invoice.date).toLocaleDateString() : '';
+            const formattedDueDate = invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : '';
+            
+            return `
+                <div class="invoice-template max-w-3xl mx-auto bg-white p-8">
+                    <div class="invoice-header mb-8">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="company-info">
+                                <h2 class="text-2xl font-bold text-gray-900">${invoice.from.name || 'Your Company Name'}</h2>
+                                <p class="text-gray-600">${invoice.from.address.replace(/\n/g, '<br>') || 'Your Business Address'}</p>
+                                <p class="text-gray-600">${invoice.from.email || 'contact@yourcompany.com'}</p>
+                            </div>
+                            <div class="invoice-meta text-right">
+                                <h1 class="text-3xl font-bold text-indigo-600 mb-2">INVOICE</h1>
+                                <p class="text-gray-600"><span class="font-medium">Number:</span> ${invoice.number || 'INV-001'}</p>
+                                <p class="text-gray-600"><span class="font-medium">Date:</span> ${formattedDate}</p>
+                                ${invoice.dueDate ? `<p class="text-gray-600"><span class="font-medium">Due Date:</span> ${formattedDueDate}</p>` : ''}
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between border-t border-b border-gray-200 py-4">
+                            <div class="bill-to">
+                                <h3 class="font-bold text-gray-800">Bill To:</h3>
+                                <p class="font-medium mt-1">${invoice.to.name || 'Client Name'}</p>
+                                <p class="text-gray-600">${invoice.to.address.replace(/\n/g, '<br>') || 'Client Address'}</p>
+                                <p class="text-gray-600">${invoice.to.email || 'client@example.com'}</p>
+                            </div>
+                            <div class="payment-method text-right">
+                                <h3 class="font-bold text-gray-800">Payment Method:</h3>
+                                <p class="text-gray-600 mt-1">Bank Transfer</p>
+                                <p class="text-gray-600">Account: *************</p>
+                                <p class="text-gray-600">${invoice.currency} Only</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="invoice-items mb-8">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="text-left py-3 px-4 font-medium border-b border-gray-200">Item</th>
+                                    <th class="text-left py-3 px-4 font-medium border-b border-gray-200">Description</th>
+                                    <th class="text-right py-3 px-4 font-medium border-b border-gray-200">Qty</th>
+                                    <th class="text-right py-3 px-4 font-medium border-b border-gray-200">Price</th>
+                                    <th class="text-right py-3 px-4 font-medium border-b border-gray-200">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${invoice.items.length > 0 ? 
+                                    invoice.items.map(item => `
+                                        <tr>
+                                            <td class="py-3 px-4 border-b border-gray-200">${item.name || 'Item'}</td>
+                                            <td class="py-3 px-4 border-b border-gray-200 text-gray-600">${item.description || '-'}</td>
+                                            <td class="py-3 px-4 border-b border-gray-200 text-right">${item.quantity}</td>
+                                            <td class="py-3 px-4 border-b border-gray-200 text-right">${formatCurrency(item.price)}</td>
+                                            <td class="py-3 px-4 border-b border-gray-200 text-right">${formatCurrency(item.total)}</td>
+                                        </tr>
+                                    `).join('') : 
+                                    `<tr>
+                                        <td colspan="5" class="py-4 px-4 text-center text-gray-500 italic">No items added</td>
+                                    </tr>`
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="invoice-totals float-right w-64">
+                        <div class="bg-gray-50 p-4 rounded-md">
+                            <div class="grid grid-cols-2 gap-4 mb-2">
+                                <span class="text-gray-700">Subtotal:</span>
+                                <span class="text-right">${formatCurrency(invoice.subtotal)}</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-2">
+                                <span class="text-gray-700">Tax (${invoice.taxRate}%):</span>
+                                <span class="text-right">${formatCurrency(invoice.taxAmount)}</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 font-bold mt-3 pt-3 border-t border-gray-200">
+                                <span class="text-lg text-gray-800">Total:</span>
+                                <span class="text-right text-lg text-indigo-600">${formatCurrency(invoice.total)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="clear-both"></div>
+                    
+                    <div class="invoice-notes mt-16 pt-6 border-t border-gray-200">
+                        <h3 class="font-bold text-gray-800 mb-2">Notes</h3>
+                        <p class="text-gray-600">${invoice.notes || 'Thank you for your business!'}</p>
+                    </div>
+                    
+                    <div class="invoice-footer mt-8 pt-6 border-t border-gray-200 text-center text-gray-500 text-sm">
+                        <p>${invoice.from.name || 'Your Company Name'} | ${invoice.from.email || 'contact@yourcompany.com'}</p>
+                        <p>This is an electronically generated invoice and doesn't require a signature.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Load template
+        function loadTemplate(templateName) {
+            // Reset invoice
+            Object.assign(invoice, {
+                number: '',
+                date: new Date().toISOString().split('T')[0],
+                dueDate: '',
+                from: {
+                    name: '',
+                    email: '',
+                    address: ''
+                },
+                to: {
+                    name: '',
+                    email: '',
+                    address: ''
+                },
+                items: [],
+                notes: '',
+                taxRate: 0,
+                currency: '$',
+                subtotal: 0,
+                taxAmount: 0,
+                total: 0
+            });
+            
+            // Apply template-specific settings
+            switch(templateName) {
+                case 'minimal':
+                    invoice.from.name = 'Minimal Designs Inc.';
+                    invoice.from.email = 'hello@minimal.design';
+                    invoice.from.address = '123 Simple Street\nMinimal City, MC 12345';
+                    invoice.to.name = 'Client Company';
+                    invoice.to.email = 'accounts@clientcompany.com';
+                    invoice.to.address = '456 Business Avenue\nClient City, CC 67890';
+                    invoice.number = 'MIN-' + Math.floor(1000 + Math.random() * 9000);
+                    invoice.date = new Date().toISOString().split('T')[0];
+                    invoice.dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                    invoice.items = [
+                        { id: Date.now().toString(), name: 'Website Design', description: 'Homepage and contact form', quantity: 1, price: 1500, total: 1500 },
+                        { id: Date.now().toString() + 1, name: 'Hosting', description: '1 year premium hosting', quantity: 1, price: 300, total: 300 }
+                    ];
+                    invoice.notes = 'Payment due within 30 days.\nThank you for your business!';
+                    invoice.taxRate = 0;
+                    calculateTotals();
+                    break;
+                    
+                case 'modern':
+                    invoice.from.name = 'Modern Solutions LLC';
+                    invoice.from.email = 'info@modernsolutions.com';
+                    invoice.from.address = '789 Innovation Blvd\nTech Park, TP 54321';
+                    invoice.to.name = 'Tech Innovations Inc.';
+                    invoice.to.email = 'finance@techinnovations.com';
+                    invoice.to.address = '101 Digital Way\nTech Hub, TH 98765';
+                    invoice.number = 'MOD-' + Math.floor(1000 + Math.random() * 9000);
+                    invoice.date = new Date().toISOString().split('T')[0];
+                    invoice.dueDate = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                    invoice.items = [
+                        { id: Date.now().toString(), name: 'Consulting', description: 'Strategy session', quantity: 4, price: 250, total: 1000 },
+                        { id: Date.now().toString() + 1, name: 'Development', description: 'Custom software module', quantity: 1, price: 1800, total: 1800 },
+                        { id: Date.now().toString() + 2, name: 'Training', description: 'On-site team training', quantity: 2, price: 500, total: 1000 }
+                    ];
+                    invoice.notes = 'Please send payment via bank transfer.\nLate fees may apply for overdue payments.';
+                    invoice.taxRate = 7.5;
+                    calculateTotals();
+                    break;
+                    
+                case 'classic':
+                    invoice.from.name = 'Classic Enterprises Ltd.';
+                    invoice.from.email = 'billing@classicent.com';
+                    invoice.from.address = '1 Traditional Square\nHeritage District\nOld City, OC 11111';
+                    invoice.to.name = 'Heritage Clients Ltd.';
+                    invoice.to.email = 'accounts@heritageclients.com';
+                    invoice.to.address = '2 Main Street\nDowntown\nOld Town, OT 22222';
+                    invoice.number = 'CL-' + Math.floor(1000 + Math.random() * 9000);
+                    invoice.date = new Date().toISOString().split('T')[0];
+                    invoice.dueDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                    invoice.items = [
+                        { id: Date.now().toString(), name: 'Annual Subscription', description: 'Premium service package', quantity: 1, price: 1200, total: 1200 },
+                        { id: Date.now().toString() + 1, name: 'Support Contract', description: '24/7 premium support', quantity: 1, price: 600, total: 600 },
+                        { id: Date.now().toString() + 2, name: 'Implementation', description: 'System setup and training', quantity: 1, price: 800, total: 800 }
+                    ];
+                    invoice.notes = 'Check payments should be made payable to Classic Enterprises Ltd.\nThank you for your continued business.';
+                    invoice.taxRate = 10;
+                    calculateTotals();
+                    break;
+                    
+                default: // Default template
+                    invoice.from.name = 'Your Company Name';
+                    invoice.from.email = 'contact@yourcompany.com';
+                    invoice.from.address = '123 Business Street\nCity, State ZIP\nCountry';
+                    invoice.to.name = 'Client Business';
+                    invoice.to.email = 'accounts@clientbusiness.com';
+                    invoice.to.address = '456 Client Avenue\nClient City, CC 12345\nClient Country';
+                    invoice.number = 'INV-' + Math.floor(1000 + Math.random() * 9000);
+                    invoice.date = new Date().toISOString().split('T')[0];
+                    invoice.dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                    invoice.items = [
+                        { id: Date.now().toString(), name: 'Professional Services', description: 'Service description', quantity: 1, price: 1000, total: 1000 },
+                        { id: Date.now().toString() + 1, name: 'Product Name', description: 'Product description', quantity: 2, price: 250, total: 500 }
+                    ];
+                    invoice.notes = 'Thank you for your business!\nPlease make payment by the due date.';
+                    invoice.taxRate = 8.25;
+                    calculateTotals();
+            }
+            
+            // Update all form fields
+            updateFormFields();
+            
+            // Render items
+            renderItems();
+            
+            // Preview invoice
+            previewInvoice();
+        }
+
+        // Update form fields from invoice data
+        function updateFormFields() {
+            elements.invoiceNumber.value = invoice.number;
+            elements.invoiceDate.value = invoice.date;
+            elements.dueDate.value = invoice.dueDate;
+            elements.currency.value = invoice.currency;
+            
+            elements.fromName.value = invoice.from.name;
+            elements.fromEmail.value = invoice.from.email;
+            elements.fromAddress.value = invoice.from.address;
+            
+            elements.toName.value = invoice.to.name;
+            elements.toEmail.value = invoice.to.email;
+            elements.toAddress.value = invoice.to.address;
+            
+            elements.invoiceNotes.value = invoice.notes;
+            elements.taxRate.value = invoice.taxRate;
+        }
+
+        // Save template
+        function saveTemplate() {
+            const templateName = prompt('Enter a name for this template:');
+            if (!templateName) return;
+            
+            const templates = JSON.parse(localStorage.getItem('invoiceTemplates') || '{}');
+            templates[templateName] = JSON.parse(JSON.stringify(invoice));
+            localStorage.setItem('invoiceTemplates', JSON.stringify(templates));
+            
+            alert(`Template "${templateName}" saved successfully!`);
+        }
+
+        // Load template from storage
+        function loadTemplateFromStorage(templateName) {
+            const templates = JSON.parse(localStorage.getItem('invoiceTemplates') || '{}');
+            const template = templates[templateName];
+            
+            if (template) {
+                Object.assign(invoice, template);
+                updateFormFields();
+                renderItems();
+                calculateTotals();
+                previewInvoice();
+            } else {
+                alert(`Template "${templateName}" not found!`);
+            }
+        }
+
+        // Download PDF
+        async function downloadPDF() {
+            // First generate the preview if not already done
+            previewInvoice();
+            
+            // Give the DOM a moment to update
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Create PDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm'
+            });
+            
+            // Get the invoice preview element
+            const element = document.querySelector('.preview-content').firstElementChild;
+            
+            // Use html2canvas to capture the element as an image
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                logging: false,
+                useCORS: true
+            });
+            
+            // Calculate the PDF dimensions
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = doc.internal.pageSize.getWidth() - 20; // 10mm margins on each side
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            // Add the image to the PDF
+            doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+            
+            // Save the PDF
+            doc.save(`${invoice.number || 'invoice'}.pdf`);
+        }
+
+        // Initialize the app
+        function init() {
+            initEventListeners();
+            renderItems();
+            calculateTotals();
+            
+            // Load default template
+            loadTemplate('default');
+        }
+
+        // Start the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
+
